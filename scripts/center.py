@@ -25,12 +25,12 @@ def callback(data):
         return
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    # Пришлось, т.к. маркер слишком темный
-    _, gray = cv2.threshold(gray, 20, 255, cv2.THRESH_BINARY)
+    #_, gray = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
     corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict,
                                                           parameters=parameters,
                                                           cameraMatrix=camera_matrix,
                                                           distCoeff=dist_coef)
+    global marker_pose
     if np.all(ids is not None):
         # TODO: ПОЧИНИТЬ (возможно только калибровка)
         rvec, tvec, markerPoints = aruco.estimatePoseSingleMarkers(corners, 0.2, camera_matrix,
@@ -39,27 +39,31 @@ def callback(data):
         marker_x = tvec[0][0][2] + x
         marker_y = -tvec[0][0][0] + y
         marker_z = -tvec[0][0][1] + z
-        global marker_pose
         marker_pose = [marker_x, marker_y, marker_z]
         for i in range(0, len(ids)):
             aruco.drawDetectedMarkers(frame, corners)
             aruco.drawAxis(frame, camera_matrix,
                            dist_coef, rvec[i], tvec[i], 0.2)
-        cv2.putText(frame, 'distance (m)', (20, 30), FONT,
+        cv2.putText(frame, ' id' + str(ids[i])[1:-1], (20, 30), FONT,
                     1, (255, 255, 255), 3, cv2.LINE_AA)
-        cv2.putText(frame, 'distance (m)', (20, 30), FONT,
+        cv2.putText(frame, ' id' + str(ids[i])[1:-1], (20, 30), FONT,
                     1, (0, 0, 0), 1, cv2.LINE_AA)
         distance = np.sum(tvec ** 2, axis=2) ** 0.5
         for i in range(len(distance)):
-            cv2.putText(frame, str([x, y, z]) + ' id' + str(ids[i])[1:-1],
+            cv2.putText(frame, str([x, y, z]),
                         (20, 70+20*i), FONT, 1, (255, 255, 255),
                         3, cv2.LINE_AA)
-            cv2.putText(frame, str([x, y, z]) + ' id' + str(ids[i])[1:-1],
+            cv2.putText(frame, str([x, y, z]),
                         (20, 70+20*i), FONT, 1, (0, 0, 0),
                         1, cv2.LINE_AA)
+    else:
+        cv2.putText(frame, 'NOT FOUND', (20, 30), FONT,
+                    1, (255, 255, 255), 3, cv2.LINE_AA)
+        cv2.putText(frame, 'NOT FOUND', (20, 30), FONT,
+                    1, (0, 0, 0), 1, cv2.LINE_AA)
     try:
-        #image_pub.publish(bridge.cv2_to_imgmsg(gray, '8UC1'))
         image_pub.publish(bridge.cv2_to_imgmsg(frame, 'bgr8'))
+        #image_pub.publish(bridge.cv2_to_imgmsg(gray, '8UC1'))
     except CvBridgeError as e:
         rospy.loginfo(e)
 
@@ -75,10 +79,10 @@ drone = Drone_api()
 drone.start()
 print('OK1')
 image_sub = rospy.Subscriber('/iris_front_fpv/usb_cam/image_raw',
-                             Image, callback, queue_size=20)
+                             Image, callback, queue_size=1)
 rospy.loginfo('Start Subscriber')
 image_pub = rospy.Publisher('/iris_front_fpv/usb_cam/location_img',
-                            Image, queue_size=20)
+                            Image, queue_size=1)
 rospy.loginfo('Start Publisher')
 
 drone.sleep(5)
@@ -87,10 +91,10 @@ drone.set_local_pose(0, 0, 2)
 print('OK3')
 while not drone.point_is_reached() and not drone.is_shutdown():
     drone.sleep(0.5)
-    print('OK4')
 print('OK5')
 while not drone.is_shutdown():
     drone_point = marker_pose
-    drone.set_local_pose(drone_point[0] - 1, drone_point[1], drone_point[2])
-    drone.sleep(0.1)
+    drone.set_local_pose(drone_point[0]-1, drone_point[1], drone_point[2])
+    #drone.set_local_pose(0, 0, 2)
+    drone.sleep(0.5)
 drone.stop()

@@ -24,7 +24,7 @@ roslaunch px4 mavros_posix_sitl.launch vehicle:=iris_front_fpv
 Настройка дрона производится в программе QGroundControl.  
 *Максимальная горизонтальная скорость в режимах POSCTL, OFFBOARD, AUTO  
 Необходимо снизить для более точного позиционирования*  
-**MPC_XY_VEL_MAX = 2 м/с**  
+**MPC_XY_VEL_MAX = 1 м/с**  
 
 ## Данные с дрона
 Дрон публикует в топики ROS данные с камеры.
