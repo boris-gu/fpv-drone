@@ -19,7 +19,7 @@ else
     #0 Remove file of the previous setup
     MODELS=$1/Tools/sitl_gazebo/models
     rm -rf $1/build
-    rm -rf $MODELS/fpv_cam_new $MODELS/iris_front_fpv
+    rm -rf $MODELS/fpv_cam_new $MODELS/iris_front_fpv $MODELS/iris_bottom_fpv
  
     #1 Create a model under Tools/sitl_gazebo/models
     if [ -d $MODELS ]; then
@@ -29,7 +29,7 @@ else
         echo "Directory $MODELS not found"
     fi
 
-    #3 Create an airframe file under ROMFS/px4fmu_common/init.d-posix/airframes
+    #2 Create an airframe file under ROMFS/px4fmu_common/init.d-posix/airframes
     AIRFRAMES=$1/ROMFS/px4fmu_common/init.d-posix/airframes
     if [ -d $AIRFRAMES ]; then
         cp $SCRIPTPATH/airframes/* $AIRFRAMES
@@ -38,13 +38,13 @@ else
         echo "Directory $AIRFRAMES not found"
     fi
 
-    #4 Add the airframe name to the file platforms/posix/cmake/sitl_target.cmake
+    #3 Add the airframe name to the file platforms/posix/cmake/sitl_target.cmake
     FILE_SITL_TARGET=$1/platforms/posix/cmake/sitl_target.cmake
     if [ -f $FILE_SITL_TARGET ]; then
         lineNum=$(grep -n "set(models" $FILE_SITL_TARGET | head -n 1 | cut -d: -f1)
         lineNum=$((lineNum+1))
-        gardDroneOK=$(grep -n "iris_front_fpv" $FILE_SITL_TARGET | head -n 1 | cut -d: -f1)
-        if [ -z $gardDroneOK ]; then
+        frontDroneOK=$(grep -n "iris_front_fpv" $FILE_SITL_TARGET | head -n 1 | cut -d: -f1)
+        if [ -z $frontDroneOK ]; then
             sed -i "${lineNum}i \\\tiris_front_fpv" $FILE_SITL_TARGET
         else
             echo -en "${YELLOW}[WARNING]: ${NOCOLOR}"
@@ -55,17 +55,47 @@ else
         echo "File $FILE_SITL_TARGET not found"
     fi
 
-    #5 Add the airframe name to the file ROMFS/px4fmu_common/init.d-posix/airframes/CMakeLists.txt
+    if [ -f $FILE_SITL_TARGET ]; then
+        lineNum=$(grep -n "set(models" $FILE_SITL_TARGET | head -n 1 | cut -d: -f1)
+        lineNum=$((lineNum+1))
+        bottomDroneOK=$(grep -n "iris_bottom_fpv" $FILE_SITL_TARGET | head -n 1 | cut -d: -f1)
+        if [ -z $bottomDroneOK ]; then
+            sed -i "${lineNum}i \\\tiris_bottom_fpv" $FILE_SITL_TARGET
+        else
+            echo -en "${YELLOW}[WARNING]: ${NOCOLOR}"
+            echo "iris_bottom_fpv already contains in sitl_target.cmake"
+        fi
+    else
+        echo -en "${RED}[ERR]: ${NOCOLOR}"
+        echo "File $FILE_SITL_TARGET not found"
+    fi
+
+    #4 Add the airframe name to the file ROMFS/px4fmu_common/init.d-posix/airframes/CMakeLists.txt
     FILE_CMAKELISTS=$1/ROMFS/px4fmu_common/init.d-posix/airframes/CMakeLists.txt
     if [ -f $FILE_CMAKELISTS ]; then
         lineNum=$(grep -n "px4_add_romfs_files(" $FILE_CMAKELISTS | head -n 1 | cut -d: -f1)
         lineNum=$((lineNum+1))
-        gardDroneOK=$(grep -n "220226_iris_front_fpv" $FILE_CMAKELISTS | head -n 1 | cut -d: -f1)
-        if [ -z $gardDroneOK ]; then
+        frontDroneOK=$(grep -n "220226_iris_front_fpv" $FILE_CMAKELISTS | head -n 1 | cut -d: -f1)
+        if [ -z $frontDroneOK ]; then
             sed -i "${lineNum}i \\\t220226_iris_front_fpv" $FILE_CMAKELISTS
         else
             echo -en "${YELLOW}[WARNING]: ${NOCOLOR}"
             echo "iris_front_fpv already contains in CMakeLists.txt"
+        fi
+    else
+        echo -en "${RED}[ERR]: ${NOCOLOR}"
+        echo "File $FILE_CMAKELISTS not found"
+    fi
+
+    if [ -f $FILE_CMAKELISTS ]; then
+        lineNum=$(grep -n "px4_add_romfs_files(" $FILE_CMAKELISTS | head -n 1 | cut -d: -f1)
+        lineNum=$((lineNum+1))
+        bottomDroneOK=$(grep -n "220328_iris_bottom_fpv" $FILE_CMAKELISTS | head -n 1 | cut -d: -f1)
+        if [ -z $bottomDroneOK ]; then
+            sed -i "${lineNum}i \\\t220328_iris_bottom_fpv" $FILE_CMAKELISTS
+        else
+            echo -en "${YELLOW}[WARNING]: ${NOCOLOR}"
+            echo "iris_bottom_fpv already contains in CMakeLists.txt"
         fi
     else
         echo -en "${RED}[ERR]: ${NOCOLOR}"
