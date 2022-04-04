@@ -19,6 +19,11 @@ export ROS_PACKAGE_PATH=$ROS_PACKAGE_PATH:$(pwd) && \
 export ROS_PACKAGE_PATH=$ROS_PACKAGE_PATH:$(pwd)/Tools/sitl_gazebo
 roslaunch px4 mavros_posix_sitl.launch vehicle:=iris_front_fpv
 ```
+или
+```bash
+roslaunch px4 mavros_posix_sitl.launch vehicle:=iris_bottom_fpv
+```
+
 
 ## Настройка
 Настройка дрона производится в программе QGroundControl.  
@@ -30,4 +35,4 @@ roslaunch px4 mavros_posix_sitl.launch vehicle:=iris_front_fpv
 Дрон публикует в топики ROS данные с камеры.
 
 Для просмотра изображения с камеры запустите команду `rqt_image_view` и выберите
-/iris_front_fpv/usb_cam/image_raw.
+/iris_front_fpv/usb_cam/image_raw или /iris_bottom_fpv/usb_cam/image_raw.
